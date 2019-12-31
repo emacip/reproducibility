@@ -5,30 +5,183 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
 ```
 ```{r intro, echo=FALSE, message=FALSE, warning=FALSE}
-library(devtools)
-library(dplyr)
+library(tidyr)
 library(ggplot2)
-library(SamplingUtil)
+library(dplyr)
+library(cowplot)
 ```
 
+## Introducción
+El dataset `cars` contienen datos sobre velocidades y distancias de frenado.
+Se divide en dos columnas con 19 filas.
+
+El segundo dataset `airquality` contienen datos sobre la calidad del aire de Mayo a Septiembre de 1973 en la ciudad de Nueva York.
 
 
+## Preparación del ejercicio
+Para realizar  el ejercicio, se utilizarán las librerías  `dplyr`, `tidyr` y `ggplot2`.
+Para el ejercicio 2, se recomienda utilizar la librería  `cowplot`.
+**Intentar utilizar el operador %>% (*forward pipe*)**.
 
-```{r cars}
+## Ejercicio 1
+Comprobar que tipo de datos tiene el conjunto de elementos proporcionado mediante
+la función “head”.
+
+```{r head_cars}
+head(cars)
+```
+
+Realizar un resumen para obtener información detalla del conjunto de elementos
+mediante la función “summary”.
+
+```{r summary_cars}
 summary(cars)
 ```
 
+Dibujar mediante un gráfico de puntos (scatterplot) la información contenida (mediante
+“plot”).
 
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-ggplot(pressure)
+```{r fig.align='center'}
+plot(cars)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Dibujar mediante un gráfico de puntos (scatterplot) la información contenida (mediante
+“ggplot2”).
+
+```{r fig.align='center'}
+cars %>% ggplot(aes(x=speed, y=dist)) + 
+  geom_point() 
+```
+
+Crear el gráfico anterior coloreados en rojo los puntos.
+
+```{r fig.align='center'}
+cars %>% ggplot(aes(x=speed, y=dist)) + 
+  geom_point(colour="red") 
+```
+
+Crear el gráfico anterior pero en este caso en función de la velocidad.
+
+```{r fig.align='center'}
+cars %>% ggplot(aes(x=speed, y=dist,colour=speed)) + 
+  geom_point() 
+```
+
+Crear el gráfico anterior pero en este caso en función de la distancia de frenado.
+
+```{r fig.align='center'}
+cars %>% ggplot(aes(x=speed, y=dist, colour=dist)) + 
+  geom_point() 
+```
+
+Introducir un modelo lineal (“lm”) mediante la función “geom_smooth” en el diagrama
+anterior y añadir un título descriptivo y nombres a los ejes x e y
+
+```{r fig.align='center'}
+cars %>% ggplot(aes(speed, dist)) + 
+  geom_point() +
+  geom_smooth() +
+  labs(x = "speed", y = "distance", title="Relacion distancia de frenado respecto velocidad")
+```
+
+## Ejercicio 2
+
+Comprobar que tipo de datos tiene el conjunto de elementos proporcionado mediante
+la función “head”.
+
+```{r fig.align='center'}
+head(airquality)
+```
+
+Realizar un resumen para obtener información detalla del conjunto de elementos
+mediante la función “summary”.
+
+```{r fig.align='center'}
+summary(airquality)
+```
+
+Realiza la visualización de los datos. Para ello se debe crear un histograma (ggplot2)
+mediante “geom_bar”. Añadir el modelo lineal (“lm”) mediante “geom_smooth”.
+
+```{r fig.align='center'}
+# Variable Ozone
+airquality %>% 
+  ggplot(aes(Ozone)) + 
+  geom_bar() 
+
+# Variable Radiacion Solar
+airquality %>% 
+  ggplot(aes(Solar.R)) + 
+  geom_bar() 
+
+# Variable Viento
+airquality %>% 
+  ggplot(aes(Wind)) + 
+  geom_bar() 
+
+# Variable Temperatura
+airquality %>% 
+  ggplot(aes(Temp)) + 
+  geom_bar()
+```
+
+Crear un gráfico compuesto por los cuatro gráficos anteriores. Utilizar la librería
+“cowplot” y la función “plot_grid”.
+
+```{r fig.align='center'}
+p1 <-- airquality %>% ggplot(aes(Ozone)) + geom_bar()
+p2 <-- airquality %>% ggplot(aes(Solar.R)) + geom_bar() 
+p3 <-- airquality %>% ggplot(aes(Wind)) + geom_bar()
+p4 <-- airquality %>% ggplot(aes(Temp)) + geom_bar()
+plot_grid(p1, p2, p3, p4)
+
+# otra forma
+airquality %>% select(1:4) %>%
+  gather() %>% 
+  ggplot(aes(value)) +
+  facet_wrap(~ key, scales = "free") +
+  geom_bar() 
+```
+
+De manera análoga al gráfico anterior crear un gráfico compuesto por las cuatro
+densidades de cada variable. Utilizar la función “geom_density”.
+
+```{r fig.align='center'}
+airquality %>% select(1:4) %>%
+  gather() %>% 
+  ggplot(aes(value)) +
+  facet_wrap(~ key, scales = "free") +
+  geom_density() 
+```
+
+Indicar opinión sobre las variables según lo visualizado.
+
+Las variables Ozono y Solar.R son asimétricas y será necesario realizar alguna transformación para poder hacerla mas simétrica
+Las variables Temp y Wind tienen una distribución mas normal.
+En base a esto se debería  analizar la correlación. entre ellas, pero se puede observar que la concentración de ozono y la radiación solar deben tener alguna correlación. 
+Igual que la concentración de ozono y la temperatura.
+
+
+## Comentarios
+
+En el ejercicio 2 a la hora de realizar la visualización de los datos con el modelo lineal geom_smooth no pude ser capaz de realizarlo. No se si el enunciado es correcto
+
+Podria realizarse en base a la variable Ozone
+
+```{r fig.align='center'}
+airquality %>% select(1:4) %>%
+  gather(-Ozone, key = "var", value = "value") %>%
+  ggplot(aes(x = value, y = Ozone)) +
+  geom_point() +
+  stat_smooth() +
+  facet_wrap(~ var, scales = "free") +
+  theme_bw()
+```
+
+
+
+
+
